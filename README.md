@@ -22,4 +22,4 @@ mpirun -n 4 ./exec -options_file setting.yaml -dm_plex_box_faces 100,100,100
 
 Order of the elements is set via `-degree`. So quadratic elements would have `-degree 2`
 
-For timing the solution writing, you can add the `-log_view` flag, which will print out timings at the end of the run. The time spent in writing is documented by the `VecView` event.
+The time taken to write the file is printed out at the end (via the `VecView` event in PETSc).
