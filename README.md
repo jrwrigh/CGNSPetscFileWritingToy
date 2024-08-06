@@ -19,3 +19,7 @@ Size of the problem is controlled by `-dm_plex_box_faces` flag. So a 100x100x100
 ```
 mpirun -n 4 ./exec -options_file setting.yaml -dm_plex_box_faces 100,100,100
 ```
+
+Order of the elements is set via `-degree`. So quadratic elements would have `-degree 2`
+
+For timing the solution writing, you can add the `-log_view` flag, which will print out timings at the end of the run. The time spent in writing is documented by the `VecView` event.
