@@ -1,0 +1,10 @@
+dm_plex:
+  dim: 3
+  shape: zbox
+  simplex: 0
+  box:
+    faces: 10,10,10
+
+dm_view:
+
+vec_view: cgns:test.cgns
