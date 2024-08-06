@@ -63,10 +63,10 @@ int main(int argc, char **argv)
 {
   DM       dm;
   AppCtx   user;
-  PetscInt depth;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, help));
+  PetscCall(PetscLogDefaultBegin());  // So we can use PetscLogEventGetPerfInfo without -log_view
   PetscCall(ProcessOptions(PETSC_COMM_WORLD, &user));
   PetscCall(CreateMesh(PETSC_COMM_WORLD, &user, &dm));
   PetscCall(SetupDiscretization(dm, &user));
@@ -77,62 +77,17 @@ int main(int argc, char **argv)
     PetscCall(VecViewFromOptions(vec, NULL, "-vec_view"));
     PetscCall(VecDestroy(&vec));
   }
-  PetscCall(DMPlexGetDepth(dm, &depth));
+
+  { // Get time taken to write file
+    PetscLogEvent      vec_view_log;
+    PetscEventPerfInfo perf_info;
+
+    PetscCall(PetscLogEventGetId("VecView", &vec_view_log));
+    PetscCall(PetscLogEventGetPerfInfo(PETSC_DETERMINE, vec_view_log, &perf_info));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\nTime taken for vec writing (sec): %g\n", perf_info.time));
+  }
+
   PetscCall(DMDestroy(&dm));
   PetscCall(PetscFinalize());
   return 0;
 }
-
-/*TEST
-
-  test:
-    suffix: 0
-    requires: triangle
-    args: -dm_refine 1 -petscspace_degree 1 -dm_view -offsets_view
-
-  test:
-    suffix: 1
-    args: -dm_plex_simplex 0 -dm_plex_box_bd periodic,none -dm_plex_box_faces 3,3 -dm_sparse_localize 0 -petscspace_degree 1 \
-          -dm_view -offsets_view
-
-  test:
-    suffix: cg_2d
-    args: -dm_plex_simplex 0 -dm_plex_box_bd none,none -dm_plex_box_faces 3,3 -petscspace_degree 1 \
-          -dm_view -offsets_view
-
-  test:
-    suffix: 1d_sfc
-    args: -dm_plex_simplex 0 -dm_plex_dim 1 -dm_plex_shape zbox -dm_plex_box_faces 3 1 -dm_view -coord_ltog_view
-
-  test:
-    suffix: 2d_sfc
-    nsize: 2
-    args: -dm_plex_simplex 0 -dm_plex_dim 2 -dm_plex_shape zbox -dm_plex_box_faces 4,3 -dm_distribute 0 -petscspace_degree 1 -dm_view
-
-  test:
-    suffix: 2d_sfc_periodic
-    nsize: 2
-    args: -dm_plex_simplex 0 -dm_plex_dim 2 -dm_plex_shape zbox -dm_plex_box_faces 4,3 -dm_distribute 0 -petscspace_degree 1 -dm_plex_box_bd periodic,none -dm_view ::ascii_info_detail
-
-  testset:
-    args: -dm_plex_simplex 0 -dm_plex_dim 2 -dm_plex_shape zbox -dm_plex_box_faces 3,2 -petscspace_degree 1 -dm_view ::ascii_info_detail -closure_tensor
-    nsize: 2
-    test:
-      suffix: 2d_sfc_periodic_stranded
-      args: -dm_distribute 0 -dm_plex_box_bd none,periodic
-    test:
-      suffix: 2d_sfc_periodic_stranded_dist
-      args: -dm_distribute 1 -petscpartitioner_type simple -dm_plex_box_bd none,periodic
-    test:
-      suffix: 2d_sfc_biperiodic_stranded
-      args: -dm_distribute 0 -dm_plex_box_bd periodic,periodic
-    test:
-      suffix: 2d_sfc_biperiodic_stranded_dist
-      args: -dm_distribute 1 -petscpartitioner_type simple -dm_plex_box_bd periodic,periodic
-
-  test:
-    suffix: fv_0
-    requires: triangle
-    args: -dm_refine 1 -use_fe 0 -dm_view -offsets_view
-
-TEST*/
