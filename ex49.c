@@ -7,7 +7,25 @@ typedef struct {
   PetscBool useFE;
   PetscInt  degree;
   PetscBool closure_tensor;
+  PetscBool project_solution;
 } AppCtx;
+
+#define M_PI 3.1415926535897932384626433827950288
+
+static PetscErrorCode project_function(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt Nc, PetscScalar *u,
+                                       void *ctx) {
+  PetscReal x_tot = 0;
+
+  PetscFunctionBeginUser;
+  for (PetscInt d = 0; d < dim; d++) x_tot += PetscSqr(x[d]) ;
+  x_tot = sqrt(x_tot);
+  for (PetscInt c = 0; c < Nc; c++) {
+    PetscScalar value = sin(2.3 * M_PI * x_tot);
+    if (PetscAbsScalar(value) < 100 * PETSC_MACHINE_EPSILON) value = 0.;
+    u[c] = value;
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
 {
@@ -19,6 +37,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscOptionsBool("-use_fe", "Use FE or FV discretization", "ex49.c", options->useFE, &options->useFE, NULL));
   PetscCall(PetscOptionsInt("-degree", "Degree of FEM discretization", "ex49.c", options->degree, &options->degree, NULL));
   PetscCall(PetscOptionsBool("-closure_tensor", "Use DMPlexSetClosurePermutationTensor()", "ex49.c", options->closure_tensor, &options->closure_tensor, NULL));
+  PetscCall(PetscOptionsBool("-project_solution", "Project solution onto mesh", "ex49.c", options->project_solution, &options->project_solution, NULL));
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -58,7 +77,6 @@ static PetscErrorCode SetupDiscretization(DM dm, AppCtx *user)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
 int main(int argc, char **argv)
 {
   DM       dm;
@@ -74,6 +92,11 @@ int main(int argc, char **argv)
     Vec vec;
 
     PetscCall(DMCreateLocalVector(dm, &vec));
+    if (user.project_solution) {
+      PetscErrorCode (*funcs)(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt Nc, PetscScalar *u,
+                              void *ctx) = {project_function};
+      PetscCall(DMProjectFunctionLocal(dm, 0, &funcs, NULL, INSERT_VALUES, vec));
+    }
     PetscCall(VecViewFromOptions(vec, NULL, "-vec_view"));
     PetscCall(VecDestroy(&vec));
   }
