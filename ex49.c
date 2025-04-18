@@ -6,6 +6,7 @@ static char help[] = "Tests dof numberings for external integrators such as LibC
 typedef struct {
   PetscBool useFE;
   PetscInt  degree;
+  PetscInt  num_comps;
   PetscBool closure_tensor;
   PetscBool project_solution;
 } AppCtx;
@@ -31,11 +32,13 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
 {
   PetscFunctionBeginUser;
   options->useFE          = PETSC_TRUE;
-  options->degree     = 1;
+  options->degree         = 1;
   options->closure_tensor = PETSC_FALSE;
+  options->num_comps      = 5;
   PetscOptionsBegin(comm, "", "Dof Ordering Options", "DMPLEX");
   PetscCall(PetscOptionsBool("-use_fe", "Use FE or FV discretization", "ex49.c", options->useFE, &options->useFE, NULL));
   PetscCall(PetscOptionsInt("-degree", "Degree of FEM discretization", "ex49.c", options->degree, &options->degree, NULL));
+  PetscCall(PetscOptionsInt("-num_comps", "Number of components", "ex49.c", options->num_comps, &options->num_comps, NULL));
   PetscCall(PetscOptionsBool("-closure_tensor", "Use DMPlexSetClosurePermutationTensor()", "ex49.c", options->closure_tensor, &options->closure_tensor, NULL));
   PetscCall(PetscOptionsBool("-project_solution", "Project solution onto mesh", "ex49.c", options->project_solution, &options->project_solution, NULL));
   PetscOptionsEnd();
@@ -64,7 +67,7 @@ static PetscErrorCode SetupDiscretization(DM dm, AppCtx *user)
 
   PetscFE        fe, fe_face;
 
-  PetscCall(PetscFECreateLagrange(comm, dim, 5, PETSC_FALSE, user->degree, user->degree, &fe));
+  PetscCall(PetscFECreateLagrange(comm, dim, user->num_comps, PETSC_FALSE, user->degree, user->degree, &fe));
   PetscCall(PetscFEGetHeightSubspace(fe, 1, &fe_face));
   PetscCall(DMAddField(dm, NULL, (PetscObject)fe));
   PetscCall(PetscFEDestroy(&fe));
