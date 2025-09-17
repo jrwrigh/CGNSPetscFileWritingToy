@@ -10,6 +10,7 @@ typedef struct {
   PetscInt  num_comps;
   PetscBool closure_tensor;
   PetscBool project_solution;
+  PetscBool part_balance;
 } AppCtx;
 
 #define M_PI 3.1415926535897932384626433827950288
@@ -36,12 +37,14 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   options->degree         = 1;
   options->closure_tensor = PETSC_FALSE;
   options->num_comps      = 5;
+  options->part_balance   = PETSC_TRUE;
   PetscOptionsBegin(comm, "", "Dof Ordering Options", "DMPLEX");
   PetscCall(PetscOptionsBool("-use_fe", "Use FE or FV discretization", "ex49.c", options->useFE, &options->useFE, NULL));
   PetscCall(PetscOptionsInt("-degree", "Degree of FEM discretization", "ex49.c", options->degree, &options->degree, NULL));
   PetscCall(PetscOptionsInt("-num_comps", "Number of components", "ex49.c", options->num_comps, &options->num_comps, NULL));
   PetscCall(PetscOptionsBool("-closure_tensor", "Use DMPlexSetClosurePermutationTensor()", "ex49.c", options->closure_tensor, &options->closure_tensor, NULL));
   PetscCall(PetscOptionsBool("-project_solution", "Project solution onto mesh", "ex49.c", options->project_solution, &options->project_solution, NULL));
+  PetscCall(PetscOptionsBool("-set_partition_balance", "Set partition balance", "DMPlexSetPartitionBalance", options->part_balance, &options->part_balance, NULL));
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -51,7 +54,7 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
   PetscFunctionBeginUser;
   PetscCall(DMCreate(comm, dm));
   PetscCall(DMSetType(*dm, DMPLEX));
-  PetscCall(DMPlexSetPartitionBalance(*dm, PETSC_TRUE));
+  PetscCall(DMPlexSetPartitionBalance(*dm, user->part_balance));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(DMSetApplicationContext(*dm, user));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
