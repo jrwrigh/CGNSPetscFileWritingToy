@@ -1,0 +1,19 @@
+BasedOnStyle: "Google"
+
+AlignAfterOpenBracket:        Align
+AlignArrayOfStructures:       Left
+AlignConsecutiveAssignments:  Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignEscapedNewlines:         true
+AlignOperands:                Align
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+ColumnLimit:                  150
+PenaltyBreakOpenParenthesis: 100
+ReflowComments:               false
+CommentPragmas:               'TESTARGS'
+DerivePointerAlignment:       false
+IncludeBlocks:                Preserve
+PointerAlignment:             Right
+TabWidth:                     4
+UseTab:                       Never
+StatementMacros:              [CeedPragmaOptimizeOn, CeedPragmaOptimizeOff]
