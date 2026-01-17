@@ -11,6 +11,7 @@ typedef struct {
   PetscBool closure_tensor;
   PetscBool project_solution;
   PetscBool part_balance;
+  PetscBool create_mat;
 } AppCtx;
 
 #define M_PI 3.1415926535897932384626433827950288
@@ -45,6 +46,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscOptionsBool("-closure_tensor", "Use DMPlexSetClosurePermutationTensor()", "ex49.c", options->closure_tensor, &options->closure_tensor, NULL));
   PetscCall(PetscOptionsBool("-project_solution", "Project solution onto mesh", "ex49.c", options->project_solution, &options->project_solution, NULL));
   PetscCall(PetscOptionsBool("-set_partition_balance", "Set partition balance", "DMPlexSetPartitionBalance", options->part_balance, &options->part_balance, NULL));
+  PetscCall(PetscOptionsBool("-create_mat", "Create Mat", "DMCreateMatrix", options->create_mat, &options->create_mat, NULL));
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -246,6 +248,11 @@ int main(int argc, char **argv)
   PetscCall(ProcessOptions(PETSC_COMM_WORLD, &user));
   PetscCall(CreateMesh(PETSC_COMM_WORLD, &user, &dm));
   PetscCall(SetupDiscretization(dm, &user));
+  if (user.create_mat) {
+    Mat A;
+    PetscCall(DMCreateMatrix(dm, &A));
+    PetscCall(MatDestroy(&A));
+  }
   PetscCall(DMPrintVecSizes(dm, &user));
 
   {
